@@ -84,7 +84,7 @@ export function MyRoomAuth({ view = "login" }: { view?: "intro" | "login" }) {
 
     const api = createMyRoom(host, {
       initialOpen: view === "login",
-      onEnter: view === "intro" ? () => navigate({ to: "/login" }) : undefined,
+      ...(view === "intro" ? { onEnter: () => void navigate({ to: "/login" }) } : {}),
       onSubmit: (payload) => void handleSubmit(payload),
     });
     handleRef.current = api;
