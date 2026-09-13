@@ -18,9 +18,11 @@
 /* My Room brand mark for the header. The empty card slot anchors the RK/UI canvas. */
 .brand-symbol{border-radius:8px;background:rgba(241,245,249,.08);overflow:hidden}
 .brand-symbol svg{display:none}
-.brand-symbol img{width:28px;height:28px;object-fit:contain}
+.brand-symbol img{display:block!important;width:28px!important;height:28px!important;max-width:28px!important;object-fit:contain}
 .logo-slot{display:grid;place-items:center}
 html:not(.dark) .brand-symbol{background:#f1f5f9}
 .my-room-intro-only .motion,.my-room-intro-only .back{display:none!important}
 .my-room-intro-only .stage{cursor:pointer}
+.my-room-screen-link{position:fixed;z-index:40;inset:0;display:block;cursor:pointer}
+.my-room-screen-link:focus-visible{outline:2px solid #a5c5ff;outline-offset:-9px}
 .my-room-login-only .intro,.my-room-login-only .intro-footer,.my-room-login-only .enter-hit{display:none!important}

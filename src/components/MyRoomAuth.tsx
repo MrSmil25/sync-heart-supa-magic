@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/lib/supabase-external";
 import shellHtml from "./my-room/shell.html?raw";
 import myRoomCss from "./MyRoomAuth.css?raw";
@@ -111,8 +111,12 @@ export function MyRoomAuth({ view = "login" }: { view?: "intro" | "login" }) {
     <div
       ref={hostRef}
       className={view === "intro" ? "my-room-intro-only" : "my-room-login-only"}
-      dangerouslySetInnerHTML={{ __html: brandedShellHtml }}
-    />
+    >
+      <div dangerouslySetInnerHTML={{ __html: brandedShellHtml }} />
+      {view === "intro" ? (
+        <Link className="my-room-screen-link" to="/login" aria-label="Buka halaman masuk My Room" />
+      ) : null}
+    </div>
   );
 }
 
