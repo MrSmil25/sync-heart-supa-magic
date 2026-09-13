@@ -251,6 +251,7 @@ function AppLayout() {
   const categoryAdmin = canManageCategories(profile?.role);
   const sectionAdmin = canManageSections(profile?.role);
   const pendingAssignments = usePendingAssignmentCount();
+  const profileDivision = (profile as { division?: string | null } | null | undefined)?.division ?? null;
 
   function allowed(item: NavItem) {
     if (item.requires === "categoryAdmin") return categoryAdmin;
@@ -268,15 +269,14 @@ function AppLayout() {
       .filter((section) =>
         isSectionVisible(section.key, {
           role: profile?.role,
-          division: (profile as { division?: string | null } | null | undefined)?.division ?? null,
+          division: profileDivision,
           settings: sectionSettings ?? null,
           overrides: sectionOverrides ?? null,
         }),
       );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     profile?.role,
-    (profile as { division?: string | null } | null | undefined)?.division,
+    profileDivision,
     sectionSettings,
     sectionOverrides,
     categoryAdmin,
@@ -293,16 +293,15 @@ function AppLayout() {
     navigate({ to: "/login", replace: true });
   }
 
-  function badgeFor(to: string) {
-    return to === "/mentor-tasks" ? pendingAssignments : 0;
-  }
-
   const workspaceSections = useMemo(
     () =>
       visibleSections.map((section) => ({
         key: section.key,
         label: section.label,
-        items: section.items.map((item) => ({ ...item, badge: badgeFor(item.to) })),
+        items: section.items.map((item) => ({
+          ...item,
+          badge: item.to === "/mentor-tasks" ? pendingAssignments : 0,
+        })),
       })),
     [visibleSections, pendingAssignments],
   );
