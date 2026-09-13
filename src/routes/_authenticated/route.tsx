@@ -118,7 +118,12 @@ const navSections: NavSection[] = [
     items: [
       { to: "/finance-summary", label: "Ringkasan Keuangan", icon: PieChart },
       { to: "/fund-requests", label: "Pengajuan Dana", icon: Wallet },
-      { to: "/fund-approvals", label: "Approval Dana", icon: ShieldCheck, requires: "fundApprover" },
+      {
+        to: "/fund-approvals",
+        label: "Approval Dana",
+        icon: ShieldCheck,
+        requires: "fundApprover",
+      },
       { to: "/budgets", label: "Anggaran", icon: PiggyBank },
       { to: "/transactions", label: "Feed Keuangan", icon: Receipt },
       { to: "/admin/categories", label: "Kelola Kategori", icon: Tags, requires: "categoryAdmin" },
@@ -293,11 +298,12 @@ function AppLayout() {
   }
 
   const workspaceSections = useMemo(
-    () => visibleSections.map((section) => ({
-      key: section.key,
-      label: section.label,
-      items: section.items.map((item) => ({ ...item, badge: badgeFor(item.to) })),
-    })),
+    () =>
+      visibleSections.map((section) => ({
+        key: section.key,
+        label: section.label,
+        items: section.items.map((item) => ({ ...item, badge: badgeFor(item.to) })),
+      })),
     [visibleSections, pendingAssignments],
   );
 
@@ -306,17 +312,31 @@ function AppLayout() {
       <WorkspaceNavigation accountId={user.id} pathname={pathname} sections={workspaceSections} />
       <div className="workspace-content">
         <header className="workspace-header">
-          <Link to="/dashboard" className="workspace-wordmark" aria-label="My Room — Dashboard">My Room</Link>
+          <Link to="/dashboard" className="workspace-wordmark" aria-label="My Room — Dashboard">
+            My Room
+          </Link>
           <div className="flex min-w-0 items-center justify-end gap-2 sm:gap-3">
             <ThemeToggle />
             <NotificationBell />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-11 min-w-0 gap-2 px-1.5 sm:px-2" aria-label="Buka menu akun">
-                  <UserAvatar path={profile?.photo_url} name={profile?.full_name} className="size-9" />
+                <Button
+                  variant="ghost"
+                  className="h-11 min-w-0 gap-2 px-1.5 sm:px-2"
+                  aria-label="Buka menu akun"
+                >
+                  <UserAvatar
+                    path={profile?.photo_url}
+                    name={profile?.full_name}
+                    className="size-9"
+                  />
                   <span className="hidden min-w-0 text-left md:block">
-                    <span className="block max-w-40 truncate text-sm font-semibold">{profile?.full_name ?? "Pengguna"}</span>
-                    <span className="block max-w-40 truncate text-xs text-muted-foreground">{profile?.role ?? "Anggota"}</span>
+                    <span className="block max-w-40 truncate text-sm font-semibold">
+                      {profile?.full_name ?? "Pengguna"}
+                    </span>
+                    <span className="block max-w-40 truncate text-xs text-muted-foreground">
+                      {profile?.role ?? "Anggota"}
+                    </span>
                   </span>
                   <ChevronDown className="hidden size-4 text-muted-foreground sm:block" />
                 </Button>
@@ -324,11 +344,22 @@ function AppLayout() {
               <DropdownMenuContent align="end" className="w-60">
                 <DropdownMenuLabel>
                   <span className="block truncate">{profile?.full_name ?? "Pengguna"}</span>
-                  <span className="block truncate text-xs font-normal text-muted-foreground">{profile?.role ?? "Anggota"}</span>
+                  <span className="block truncate text-xs font-normal text-muted-foreground">
+                    {profile?.role ?? "Anggota"}
+                  </span>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild><Link to="/profile"><User /> Profil saya</Link></DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => void handleLogout()} className="text-destructive focus:text-destructive"><LogOut /> Keluar</DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/profile">
+                    <User /> Profil saya
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => void handleLogout()}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <LogOut /> Keluar
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

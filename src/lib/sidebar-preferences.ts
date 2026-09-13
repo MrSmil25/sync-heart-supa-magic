@@ -23,10 +23,17 @@ export function normalizeSidebarPreferences(
 ): StoredPreferences {
   const allowed = new Set(items.map((item) => item.to));
   const value = raw && typeof raw === "object" ? (raw as Partial<StoredPreferences>) : null;
-  const candidates = value?.version === 1 && Array.isArray(value.pins) ? value.pins : DEFAULT_SHORTCUTS;
-  const pins = [...new Set(candidates.filter((path): path is string => typeof path === "string" && allowed.has(path)))].slice(0, MAX_SIDEBAR_SHORTCUTS);
+  const candidates =
+    value?.version === 1 && Array.isArray(value.pins) ? value.pins : DEFAULT_SHORTCUTS;
+  const pins = [
+    ...new Set(
+      candidates.filter((path): path is string => typeof path === "string" && allowed.has(path)),
+    ),
+  ].slice(0, MAX_SIDEBAR_SHORTCUTS);
   const visits = Object.fromEntries(
-    Object.entries(value?.version === 1 && value.visits && typeof value.visits === "object" ? value.visits : {})
+    Object.entries(
+      value?.version === 1 && value.visits && typeof value.visits === "object" ? value.visits : {},
+    )
       .filter(([path, count]) => allowed.has(path) && Number.isSafeInteger(count) && count > 0)
       .map(([path, count]) => [path, Math.min(Number(count), 1_000_000)]),
   );
@@ -95,7 +102,10 @@ export function createSidebarPreferenceStore(accountId: string, items: SidebarPr
       if (!items.some((item) => item.to === path)) return;
       commit({
         ...snapshot,
-        visits: { ...snapshot.visits, [path]: Math.min((snapshot.visits[path] ?? 0) + 1, 1_000_000) },
+        visits: {
+          ...snapshot.visits,
+          [path]: Math.min((snapshot.visits[path] ?? 0) + 1, 1_000_000),
+        },
       });
     },
     reset() {
@@ -107,6 +117,10 @@ export function createSidebarPreferenceStore(accountId: string, items: SidebarPr
 export function frequentUnpinned(items: SidebarPreferenceItem[], preferences: SidebarPreferences) {
   return items
     .filter((item) => !preferences.pins.includes(item.to) && (preferences.visits[item.to] ?? 0) > 0)
-    .sort((a, b) => (preferences.visits[b.to] ?? 0) - (preferences.visits[a.to] ?? 0) || a.label.localeCompare(b.label, "id"))
+    .sort(
+      (a, b) =>
+        (preferences.visits[b.to] ?? 0) - (preferences.visits[a.to] ?? 0) ||
+        a.label.localeCompare(b.label, "id"),
+    )
     .slice(0, 5);
 }

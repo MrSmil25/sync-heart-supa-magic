@@ -5,9 +5,15 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "My Room — Ruang Kolaborasi Organisasi" },
-      { name: "description", content: "Masuk ke My Room untuk mengelola pekerjaan dan aktivitas organisasi." },
+      {
+        name: "description",
+        content: "Masuk ke My Room untuk mengelola pekerjaan dan aktivitas organisasi.",
+      },
       { property: "og:title", content: "My Room — Ruang Kolaborasi Organisasi" },
-      { property: "og:description", content: "Masuk ke My Room untuk mengelola pekerjaan dan aktivitas organisasi." },
+      {
+        property: "og:description",
+        content: "Masuk ke My Room untuk mengelola pekerjaan dan aktivitas organisasi.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

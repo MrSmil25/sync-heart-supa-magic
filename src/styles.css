@@ -369,7 +369,7 @@
   --sidebar-foreground: oklch(0.94 0.012 265);
   --sidebar-primary: oklch(0.878 0.05 265);
   --sidebar-primary-foreground: oklch(0.19 0.038 266);
-  --sidebar-accent: oklch(0.30 0.05 265);
+  --sidebar-accent: oklch(0.3 0.05 265);
   --sidebar-accent-foreground: oklch(0.96 0.015 265);
   --sidebar-border: oklch(0.78 0.05 265 / 12%);
   --sidebar-ring: oklch(0.81 0.09 265);
@@ -663,8 +663,10 @@
   --dash-success: oklch(0.7 0.15 163);
   --dash-warning: oklch(0.77 0.16 70);
   --dash-danger: oklch(0.63 0.23 25);
-  --dash-shadow: 0 1px 2px oklch(0.25 0.055 258 / 6%), 0 12px 30px -18px oklch(0.25 0.055 258 / 35%);
-  --dash-shadow-lg: 0 2px 4px oklch(0.25 0.055 258 / 6%), 0 26px 50px -22px oklch(0.25 0.055 258 / 40%);
+  --dash-shadow:
+    0 1px 2px oklch(0.25 0.055 258 / 6%), 0 12px 30px -18px oklch(0.25 0.055 258 / 35%);
+  --dash-shadow-lg:
+    0 2px 4px oklch(0.25 0.055 258 / 6%), 0 26px 50px -22px oklch(0.25 0.055 258 / 40%);
   --dash-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
@@ -840,15 +842,33 @@
   & > * {
     animation: dash-enter 300ms var(--dash-ease) both;
   }
-  & > *:nth-child(1) { animation-delay: 0ms; }
-  & > *:nth-child(2) { animation-delay: 50ms; }
-  & > *:nth-child(3) { animation-delay: 100ms; }
-  & > *:nth-child(4) { animation-delay: 150ms; }
-  & > *:nth-child(5) { animation-delay: 200ms; }
-  & > *:nth-child(6) { animation-delay: 250ms; }
-  & > *:nth-child(7) { animation-delay: 300ms; }
-  & > *:nth-child(8) { animation-delay: 350ms; }
-  & > *:nth-child(9) { animation-delay: 400ms; }
+  & > *:nth-child(1) {
+    animation-delay: 0ms;
+  }
+  & > *:nth-child(2) {
+    animation-delay: 50ms;
+  }
+  & > *:nth-child(3) {
+    animation-delay: 100ms;
+  }
+  & > *:nth-child(4) {
+    animation-delay: 150ms;
+  }
+  & > *:nth-child(5) {
+    animation-delay: 200ms;
+  }
+  & > *:nth-child(6) {
+    animation-delay: 250ms;
+  }
+  & > *:nth-child(7) {
+    animation-delay: 300ms;
+  }
+  & > *:nth-child(8) {
+    animation-delay: 350ms;
+  }
+  & > *:nth-child(9) {
+    animation-delay: 400ms;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -964,7 +984,9 @@
   border: 1px solid var(--dash-line);
   border-radius: 0.5rem;
   padding: 0.4rem 0.65rem;
-  transition: background-color 200ms var(--dash-ease), border-color 200ms var(--dash-ease);
+  transition:
+    background-color 200ms var(--dash-ease),
+    border-color 200ms var(--dash-ease);
 }
 
 .workspace-menu-link:hover,
@@ -1001,7 +1023,12 @@
   z-index: 2;
   align-self: end;
   padding: 2rem 1.5rem;
-  background: linear-gradient(to top, oklch(0.2 0.1 260 / 96%) 15%, oklch(0.2 0.1 260 / 50%) 72%, transparent);
+  background: linear-gradient(
+    to top,
+    oklch(0.2 0.1 260 / 96%) 15%,
+    oklch(0.2 0.1 260 / 50%) 72%,
+    transparent
+  );
 }
 
 .dashboard-hero-date {
@@ -1041,7 +1068,9 @@
   padding: 0.65rem 1rem;
   font-size: 0.9rem;
   font-weight: 700;
-  transition: transform 200ms var(--dash-ease), background-color 200ms var(--dash-ease);
+  transition:
+    transform 200ms var(--dash-ease),
+    background-color 200ms var(--dash-ease);
 }
 
 .dashboard-hero-primary {
@@ -1071,7 +1100,12 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, transparent 35%, oklch(0.2 0.1 260 / 52%) 82%, oklch(0.2 0.1 260 / 85%));
+  background: linear-gradient(
+    to bottom,
+    transparent 35%,
+    oklch(0.2 0.1 260 / 52%) 82%,
+    oklch(0.2 0.1 260 / 85%)
+  );
 }
 
 .dashboard-team-photo img {
@@ -1216,7 +1250,11 @@
     place-items: center;
     border-radius: 1rem;
     color: var(--dash-muted);
-    transition: transform 200ms var(--dash-ease), color 200ms var(--dash-ease), background-color 200ms var(--dash-ease), box-shadow 200ms var(--dash-ease);
+    transition:
+      transform 200ms var(--dash-ease),
+      color 200ms var(--dash-ease),
+      background-color 200ms var(--dash-ease),
+      box-shadow 200ms var(--dash-ease);
   }
 
   .workspace-rail-link:hover,
@@ -1259,7 +1297,12 @@
   .dashboard-hero-copy {
     align-self: stretch;
     padding: 3.25rem 2.8rem;
-    background: linear-gradient(to right, oklch(0.24 0.13 260) 25%, oklch(0.24 0.13 260 / 92%) 72%, transparent);
+    background: linear-gradient(
+      to right,
+      oklch(0.24 0.13 260) 25%,
+      oklch(0.24 0.13 260 / 92%) 72%,
+      transparent
+    );
   }
 
   .dashboard-hero-copy h1 {

@@ -10,7 +10,7 @@ export function useMySubmissions() {
   const { data: profile } = useMyProfile();
   return useQuery({
     queryKey: ["my-submissions", profile?.id],
-    queryFn: () => profile?.id ? fetchMySubmissions(profile.id) : Promise.resolve([]),
+    queryFn: () => (profile?.id ? fetchMySubmissions(profile.id) : Promise.resolve([])),
     enabled: !!profile?.id,
   });
 }
