@@ -1,4 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { MyRoomAuth } from "@/components/MyRoomAuth";
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -17,11 +18,16 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
+    links: [{ rel: "preload", as: "image", href: "/assets/Logo_aplikasi_MR.png" }],
   }),
   beforeLoad: async () => {
     const { supabase } = await import("@/lib/supabase-external");
     const { data } = await supabase.auth.getUser();
-    throw redirect({ to: data.user ? "/dashboard" : "/login", replace: true });
+    if (data.user) throw redirect({ to: "/dashboard", replace: true });
   },
-  component: () => null,
+  component: OpeningPage,
 });
+
+function OpeningPage() {
+  return <MyRoomAuth view="intro" />;
+}

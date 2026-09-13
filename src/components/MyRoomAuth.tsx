@@ -1,19 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/lib/supabase-external";
 import shellHtml from "./my-room/shell.html?raw";
 import myRoomCss from "./MyRoomAuth.css?raw";
 import { createMyRoom, type MyRoomHandle, type MyRoomSubmit } from "./my-room/engine";
-import myRoomLogo from "@/assets/Logo_aplikasi_MR.png.asset.json";
 
-const brandedShellHtml = shellHtml.replaceAll("__MY_ROOM_LOGO__", myRoomLogo.url);
+const brandedShellHtml = shellHtml.replaceAll("__MY_ROOM_LOGO__", "/assets/Logo_aplikasi_MR.png");
 
 /**
  * My Room login experience: full-screen intro, interactive 3D logos, particle
  * transition into the auth card. Auth uses the app's existing Supabase client
  * and the existing routes (/dashboard, /reset-password).
  */
-export function MyRoomAuth() {
+export function MyRoomAuth({ view = "login" }: { view?: "intro" | "login" }) {
   const navigate = useNavigate();
   const hostRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<MyRoomHandle | null>(null);
@@ -21,6 +20,7 @@ export function MyRoomAuth() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   useEffect(() => {
+    if (!mounted) return;
     const host = hostRef.current;
     if (!host) return;
 
@@ -82,14 +82,18 @@ export function MyRoomAuth() {
       }
     }
 
-    const api = createMyRoom(host, { onSubmit: (payload) => void handleSubmit(payload) });
+    const api = createMyRoom(host, {
+      initialOpen: view === "login",
+      ...(view === "intro" ? { onEnter: () => void navigate({ to: "/login" }) } : {}),
+      onSubmit: (payload) => void handleSubmit(payload),
+    });
     handleRef.current = api;
 
     return () => {
       handleRef.current = null;
       api.destroy();
     };
-  }, [navigate]);
+  }, [mounted, navigate, view]);
 
   // Scoped to this page only: injected on mount, removed with the login route.
   useEffect(() => {
@@ -103,7 +107,14 @@ export function MyRoomAuth() {
   }, []);
 
   if (!mounted) return null;
-  return <div ref={hostRef} dangerouslySetInnerHTML={{ __html: brandedShellHtml }} />;
+  return (
+    <div ref={hostRef} className={view === "intro" ? "my-room-intro-only" : "my-room-login-only"}>
+      <div dangerouslySetInnerHTML={{ __html: brandedShellHtml }} />
+      {view === "intro" ? (
+        <Link className="my-room-screen-link" to="/login" aria-label="Buka halaman masuk My Room" />
+      ) : null}
+    </div>
+  );
 }
 
 export default MyRoomAuth;

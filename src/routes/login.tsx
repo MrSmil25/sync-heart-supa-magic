@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MyRoomAuth } from "@/components/MyRoomAuth";
-import myRoomLogo from "@/assets/Logo_aplikasi_MR.png.asset.json";
 
 export const Route = createFileRoute("/login")({
   ssr: false,
@@ -19,11 +18,11 @@ export const Route = createFileRoute("/login")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "preload", as: "image", href: myRoomLogo.url }],
+    links: [{ rel: "preload", as: "image", href: "/assets/Logo_aplikasi_MR.png" }],
   }),
   component: LoginPage,
 });
 
 function LoginPage() {
-  return <MyRoomAuth />;
+  return <MyRoomAuth view="login" />;
 }

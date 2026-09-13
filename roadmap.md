@@ -17,6 +17,7 @@
 
 - [x] Dashboard Panorama Tim: hero foto asli, aksi awal, notifikasi, ringkasan lengkap
 - [x] Navigation rail personal per akun dan panel Lainnya
+- [x] Halaman awal: logo UI dan Rumah Kepemimpinan 3D, klik layar menuju login
 - [ ] QA desktop/mobile, light/dark, keyboard, preferensi, build/typecheck
 
 ## Catatan
