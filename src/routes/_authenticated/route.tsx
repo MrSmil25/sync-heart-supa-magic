@@ -251,7 +251,8 @@ function AppLayout() {
   const categoryAdmin = canManageCategories(profile?.role);
   const sectionAdmin = canManageSections(profile?.role);
   const pendingAssignments = usePendingAssignmentCount();
-  const profileDivision = (profile as { division?: string | null } | null | undefined)?.division ?? null;
+  const profileDivision =
+    (profile as { division?: string | null } | null | undefined)?.division ?? null;
 
   function allowed(item: NavItem) {
     if (item.requires === "categoryAdmin") return categoryAdmin;
