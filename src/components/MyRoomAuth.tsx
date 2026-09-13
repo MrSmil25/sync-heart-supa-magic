@@ -108,10 +108,7 @@ export function MyRoomAuth({ view = "login" }: { view?: "intro" | "login" }) {
 
   if (!mounted) return null;
   return (
-    <div
-      ref={hostRef}
-      className={view === "intro" ? "my-room-intro-only" : "my-room-login-only"}
-    >
+    <div ref={hostRef} className={view === "intro" ? "my-room-intro-only" : "my-room-login-only"}>
       <div dangerouslySetInnerHTML={{ __html: brandedShellHtml }} />
       {view === "intro" ? (
         <Link className="my-room-screen-link" to="/login" aria-label="Buka halaman masuk My Room" />
