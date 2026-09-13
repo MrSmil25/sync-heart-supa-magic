@@ -21,6 +21,8 @@ export type MyRoomSubmit = {
 
 export type MyRoomOptions = {
   onSubmit: (payload: MyRoomSubmit) => void;
+  onEnter?: () => void;
+  initialOpen?: boolean;
 };
 
 export type MyRoomHandle = {
@@ -85,7 +87,7 @@ function finishTransition(){
  else{panel.hidden=true;panel.inert=true;hit.hidden=false;hit.inert=false;setMode('login');form.elements.password.disabled=true;spin=0;tilt=0;velocity=0;hit.focus({preventScroll:true});}
  layoutDirty=true;requestDraw();
 }
-hit.addEventListener('click',()=>{if(ignoreClick){ignoreClick=false;return}begin(true)});back.addEventListener('click',()=>begin(false));
+ hit.addEventListener('click',()=>{if(ignoreClick){ignoreClick=false;return}if(options.onEnter){options.onEnter();return}begin(true)});back.addEventListener('click',()=>begin(false));
 const onKeydown=(e:KeyboardEvent)=>{if(e.key==='Escape'&&opened&&!busy)begin(false)};document.addEventListener('keydown',onKeydown);
 hit.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,lastX:e.clientX,lastY:e.clientY,moved:false,id:e.pointerId};dragging=true;ignoreClick=false;hit.setPointerCapture(e.pointerId)});
 hit.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.lastX,dy=e.clientY-drag.lastY;if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>7)drag.moved=true;if(drag.moved&&!paused){spin+=dx*.01;tilt=clamp(tilt+dy*.004,-.65,.65);velocity=dx*.009;}drag.lastX=e.clientX;drag.lastY=e.clientY;requestDraw()});
@@ -167,7 +169,7 @@ function frame(now:number){
  }
  if(!paused||transition)requestDraw();
 }
-measure();updateMotion();void init();requestDraw();
+ measure();updateMotion();void init();if(options.initialOpen)begin(true);requestDraw();
 return {
  destroy(){
   destroyed=true;

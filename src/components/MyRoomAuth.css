@@ -21,3 +21,6 @@
 .brand-symbol img{width:28px;height:28px;object-fit:contain}
 .logo-slot{display:grid;place-items:center}
 html:not(.dark) .brand-symbol{background:#f1f5f9}
+.my-room-intro-only .motion,.my-room-intro-only .back{display:none!important}
+.my-room-intro-only .stage{cursor:pointer}
+.my-room-login-only .intro,.my-room-login-only .intro-footer,.my-room-login-only .enter-hit{display:none!important}

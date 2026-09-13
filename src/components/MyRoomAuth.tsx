@@ -13,7 +13,7 @@ const brandedShellHtml = shellHtml.replaceAll("__MY_ROOM_LOGO__", myRoomLogo.url
  * transition into the auth card. Auth uses the app's existing Supabase client
  * and the existing routes (/dashboard, /reset-password).
  */
-export function MyRoomAuth() {
+export function MyRoomAuth({ view = "login" }: { view?: "intro" | "login" }) {
   const navigate = useNavigate();
   const hostRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<MyRoomHandle | null>(null);
@@ -82,14 +82,18 @@ export function MyRoomAuth() {
       }
     }
 
-    const api = createMyRoom(host, { onSubmit: (payload) => void handleSubmit(payload) });
+    const api = createMyRoom(host, {
+      initialOpen: view === "login",
+      onEnter: view === "intro" ? () => navigate({ to: "/login" }) : undefined,
+      onSubmit: (payload) => void handleSubmit(payload),
+    });
     handleRef.current = api;
 
     return () => {
       handleRef.current = null;
       api.destroy();
     };
-  }, [navigate]);
+  }, [navigate, view]);
 
   // Scoped to this page only: injected on mount, removed with the login route.
   useEffect(() => {
@@ -103,7 +107,13 @@ export function MyRoomAuth() {
   }, []);
 
   if (!mounted) return null;
-  return <div ref={hostRef} dangerouslySetInnerHTML={{ __html: brandedShellHtml }} />;
+  return (
+    <div
+      ref={hostRef}
+      className={view === "intro" ? "my-room-intro-only" : "my-room-login-only"}
+      dangerouslySetInnerHTML={{ __html: brandedShellHtml }}
+    />
+  );
 }
 
 export default MyRoomAuth;

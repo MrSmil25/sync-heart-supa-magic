@@ -25,5 +25,5 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
-  return <MyRoomAuth />;
+  return <MyRoomAuth view="login" />;
 }
