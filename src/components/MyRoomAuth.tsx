@@ -4,9 +4,8 @@ import { supabase } from "@/lib/supabase-external";
 import shellHtml from "./my-room/shell.html?raw";
 import myRoomCss from "./MyRoomAuth.css?raw";
 import { createMyRoom, type MyRoomHandle, type MyRoomSubmit } from "./my-room/engine";
-import myRoomLogo from "@/assets/Logo_aplikasi_MR.png.asset.json";
 
-const brandedShellHtml = shellHtml.replaceAll("__MY_ROOM_LOGO__", myRoomLogo.url);
+const brandedShellHtml = shellHtml.replaceAll("__MY_ROOM_LOGO__", "/assets/Logo_aplikasi_MR.png");
 
 /**
  * My Room login experience: full-screen intro, interactive 3D logos, particle
@@ -21,6 +20,7 @@ export function MyRoomAuth({ view = "login" }: { view?: "intro" | "login" }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   useEffect(() => {
+    if (!mounted) return;
     const host = hostRef.current;
     if (!host) return;
 
@@ -93,7 +93,7 @@ export function MyRoomAuth({ view = "login" }: { view?: "intro" | "login" }) {
       handleRef.current = null;
       api.destroy();
     };
-  }, [navigate, view]);
+  }, [mounted, navigate, view]);
 
   // Scoped to this page only: injected on mount, removed with the login route.
   useEffect(() => {
