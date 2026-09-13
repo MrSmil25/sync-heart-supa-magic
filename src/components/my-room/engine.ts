@@ -128,8 +128,8 @@ async function init(){
  const bytes=await new Response(new Blob([packed]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer(),length=new DataView(bytes).getUint32(0,true),meta=JSON.parse(new TextDecoder().decode(new Uint8Array(bytes,4,length))),base=4+length;
  gpu=createRenderer();
  for(const name of ['RK','UI']){const parts=meta[name].map(m=>{const p=new Float32Array(m.v),view=new DataView(bytes,base+m.offset,m.v*2+m.i*2);for(let i=0;i<m.v;i++)p[i]=view.getInt16(i*2,true)/10000;const idx=new Uint16Array(m.i);for(let i=0;i<m.i;i++)idx[i]=view.getUint16(m.v*2+i*2,true);return {p,idx,m}});const low=[Infinity,Infinity,Infinity],high=[-Infinity,-Infinity,-Infinity];for(const part of parts)for(let i=0;i<part.p.length;i++){const axis=i%3;low[axis]=Math.min(low[axis],part.p[i]);high[axis]=Math.max(high[axis],part.p[i]);}const unit=1/Math.max(high[0]-low[0],high[1]-low[1]);const meshes=parts.map(({p,idx,m})=>{for(let i=0;i<p.length;i++)p[i]=(p[i]-(low[i%3]+high[i%3])/2)*unit;return prepareMesh(p,idx,m.color,m.metal)});models.push({meshes,points:sampleModel(meshes,width<600?1300:CONFIG.particlesPerLogo)});}
- loaded=true;fallback.hidden=true;entranceAt=performance.now();pageStatus.textContent='';layoutDirty=true;
- }catch(error){gpu=null;fallback.hidden=false;pageStatus.textContent='Mode ringan aktif. Klik untuk masuk.';console.warn('My Room: using embedded vector logo fallback.');}
+  loaded=true;fallback.hidden=true;entranceAt=performance.now();pageStatus.textContent='';layoutDirty=true;if(options.initialOpen)begin(true);
+  }catch(error){gpu=null;fallback.hidden=false;pageStatus.textContent='Mode ringan aktif. Klik untuk masuk.';console.warn('My Room: using embedded vector logo fallback.');if(options.initialOpen)begin(true);}
  requestDraw();
 }
 logoCanvas.addEventListener('webglcontextlost',e=>{e.preventDefault();gpu=null;loaded=false;fallback.hidden=false;pageStatus.textContent='Mode ringan aktif. Klik untuk masuk.';if(transition)finishTransition();requestDraw()});
@@ -169,7 +169,7 @@ function frame(now:number){
  }
  if(!paused||transition)requestDraw();
 }
- measure();updateMotion();void init();if(options.initialOpen)begin(true);requestDraw();
+ measure();updateMotion();void init();requestDraw();
 return {
  destroy(){
   destroyed=true;
