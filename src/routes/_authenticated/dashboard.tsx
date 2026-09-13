@@ -1,6 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Users, Boxes, UserCheck, Building2, BriefcaseBusiness, Handshake, Coins, Landmark, Receipt, CalendarDays, ArrowRight, Bell } from "lucide-react";
+import {
+  Users,
+  Boxes,
+  UserCheck,
+  Building2,
+  BriefcaseBusiness,
+  Handshake,
+  Coins,
+  Landmark,
+  Receipt,
+  CalendarDays,
+  ArrowRight,
+  Bell,
+} from "lucide-react";
 import { useDivisions, useMyProfile, useProfiles, isSupervisor } from "@/hooks/useProfile";
 import { fetchDeals } from "@/lib/deals";
 import { fetchDashboardFinance } from "@/lib/transactions";
@@ -29,15 +42,24 @@ import { QuickActionsGrid } from "@/components/dashboard/QuickActionsGrid";
 import { ActivityTimeline, type ActivityItem } from "@/components/dashboard/ActivityTimeline";
 import { useMyAssignments, useMySubmissions } from "@/hooks/useAssignments";
 import { fetchUnreadCount } from "@/lib/notifications";
+import { fetchOrgSettings } from "@/lib/announcements";
 import teamPhoto from "@/assets/my-room-team.jpg.asset.json";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — OrgTool" },
-      { name: "description", content: "Ringkasan anggota dan divisi organisasi kampus." },
-      { property: "og:title", content: "Dashboard — OrgTool" },
-      { property: "og:description", content: "Ringkasan anggota dan divisi organisasi kampus." },
+      { title: "Dashboard — My Room" },
+      {
+        name: "description",
+        content: "Panorama tim, aksi penting, dan ringkasan organisasi di My Room.",
+      },
+      { property: "og:title", content: "Dashboard — My Room" },
+      {
+        property: "og:description",
+        content: "Panorama tim, aksi penting, dan ringkasan organisasi di My Room.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: DashboardPage,
@@ -49,9 +71,13 @@ function DashboardPage() {
   const { data: profile } = useMyProfile();
   const { data: profiles = [], isLoading } = useProfiles();
   const { data: divisions = [] } = useDivisions();
+  const { data: org } = useQuery({ queryKey: ["org-settings"], queryFn: fetchOrgSettings });
 
   const { data: deals = [] } = useQuery({ queryKey: ["deals"], queryFn: () => fetchDeals() });
-  const { data: finance } = useQuery({ queryKey: ["dashboard-finance"], queryFn: fetchDashboardFinance });
+  const { data: finance } = useQuery({
+    queryKey: ["dashboard-finance"],
+    queryFn: fetchDashboardFinance,
+  });
   const { data: events = [] } = useQuery({ queryKey: ["events"], queryFn: () => fetchEvents() });
 
   const canSeeWealth = ["Controller", "Ketua", "Waketu", "Supervisor"].includes(
@@ -76,18 +102,18 @@ function DashboardPage() {
 
   const { data: unreadCoaching = 0 } = useQuery({
     queryKey: ["coaching-unread", profile?.id],
-    queryFn: () => countUnacknowledgedCoaching(profile!.id),
+    queryFn: () => (profile?.id ? countUnacknowledgedCoaching(profile.id) : Promise.resolve(0)),
     enabled: !!profile?.id,
   });
   const { data: weeklyContributions = 0 } = useQuery({
     queryKey: ["contributions-week", profile?.id],
-    queryFn: () => countContributionsThisWeek(profile!.id),
+    queryFn: () => (profile?.id ? countContributionsThisWeek(profile.id) : Promise.resolve(0)),
     enabled: !!profile?.id,
   });
 
   const { data: unackWarnings = 0 } = useQuery({
     queryKey: ["warnings-unack", profile?.id],
-    queryFn: () => countUnacknowledgedWarnings(profile!.id),
+    queryFn: () => (profile?.id ? countUnacknowledgedWarnings(profile.id) : Promise.resolve(0)),
     enabled: !!profile?.id,
   });
 
@@ -138,7 +164,6 @@ function DashboardPage() {
   );
   const proposalsAboutMe = activeProposals.filter((p) => p.target_member_id === profile?.id);
 
-
   const activeEvents = events.filter((e) =>
     ["Planning", "Preparation", "Live"].includes(e.status ?? ""),
   );
@@ -160,13 +185,21 @@ function DashboardPage() {
 
   const assignmentsQuery = useMyAssignments();
   const submissionsQuery = useMySubmissions();
-  const { data: unreadNotifications, isLoading: unreadLoading, isError: unreadError } = useQuery({
+  const {
+    data: unreadNotifications,
+    isLoading: unreadLoading,
+    isError: unreadError,
+  } = useQuery({
     queryKey: ["notifications-unread"],
     queryFn: fetchUnreadCount,
     refetchInterval: 45_000,
   });
-  const submittedAssignmentIds = new Set((submissionsQuery.data ?? []).map((submission) => submission.assignment_id));
-  const pendingAssignments = (assignmentsQuery.data ?? []).filter((assignment) => !submittedAssignmentIds.has(assignment.id)).length;
+  const submittedAssignmentIds = new Set(
+    (submissionsQuery.data ?? []).map((submission) => submission.assignment_id),
+  );
+  const pendingAssignments = (assignmentsQuery.data ?? []).filter(
+    (assignment) => !submittedAssignmentIds.has(assignment.id),
+  ).length;
   const assignmentsLoading = assignmentsQuery.isLoading || submissionsQuery.isLoading;
   const assignmentsError = assignmentsQuery.isError || submissionsQuery.isError;
   const pendingAssignmentLabel = assignmentsError
@@ -176,7 +209,8 @@ function DashboardPage() {
       : pendingAssignments === 0
         ? "Tidak ada tugas yang perlu dilihat"
         : `${pendingAssignments} tugas perlu dilihat`;
-  const greetingName = profile?.nickname?.trim() || profile?.full_name?.trim().split(/\s+/)[0] || null;
+  const greetingName =
+    profile?.nickname?.trim() || profile?.full_name?.trim().split(/\s+/)[0] || null;
   const today = new Intl.DateTimeFormat("id-ID", {
     weekday: "long",
     day: "numeric",
@@ -218,7 +252,7 @@ function DashboardPage() {
           <p className="dashboard-hero-date">{today}</p>
           <h1 id="dashboard-heading">{greetingName ? `Halo, ${greetingName}!` : "Halo!"}</h1>
           <p className="dashboard-hero-role">
-            {[profile?.role, "My Room"].filter(Boolean).join(" · ")}
+            {[profile?.role, org?.org_name ?? "My Room"].filter(Boolean).join(" · ")}
           </p>
           <div className="dashboard-hero-actions">
             <Link to="/workspace" className="dashboard-hero-primary">
@@ -231,14 +265,21 @@ function DashboardPage() {
           </div>
         </div>
         <div className="dashboard-team-photo" aria-label="Foto tim My Room">
-          <img src={teamPhoto.url} alt="Tim My Room mengenakan jaket kuning berfoto bersama" width="1024" height="768" />
+          <img
+            src={teamPhoto.url}
+            alt="Tim My Room mengenakan jaket kuning berfoto bersama"
+            width="1024"
+            height="768"
+          />
         </div>
       </section>
 
       <QuickActionsGrid pendingLabel={pendingAssignmentLabel} />
 
       <section className="dashboard-notification-strip" aria-label="Ringkasan notifikasi">
-        <span className="dashboard-notification-icon"><Bell className="size-5" /></span>
+        <span className="dashboard-notification-icon">
+          <Bell className="size-5" />
+        </span>
         <p className="min-w-0 flex-1 font-semibold">
           {unreadError
             ? "Notifikasi belum dapat dimuat"
@@ -248,27 +289,45 @@ function DashboardPage() {
                 ? "Semua notifikasi sudah dibaca"
                 : `${unreadNotifications} notifikasi baru`}
         </p>
-        <Link to="/notifications" className="dashboard-strip-link">Lihat notifikasi <ArrowRight className="size-4" /></Link>
+        <Link to="/notifications" className="dashboard-strip-link">
+          Lihat notifikasi <ArrowRight className="size-4" />
+        </Link>
       </section>
 
       <div className="flex justify-end">
-        <a href="#ringkasan-organisasi" className="dashboard-summary-link">Ringkasan organisasi <ArrowRight className="size-4" /></a>
+        <a href="#ringkasan-organisasi" className="dashboard-summary-link">
+          Ringkasan organisasi <ArrowRight className="size-4" />
+        </a>
       </div>
 
-      <section id="ringkasan-organisasi" className="scroll-mt-24 space-y-6" aria-labelledby="summary-heading">
+      <section
+        id="ringkasan-organisasi"
+        className="scroll-mt-24 space-y-6"
+        aria-labelledby="summary-heading"
+      >
         <div>
           <p className="text-sm font-semibold text-dash-blue">RINGKASAN</p>
-          <h2 id="summary-heading" className="mt-1 text-2xl font-semibold text-dash-navy">Ringkasan organisasi</h2>
+          <h2 id="summary-heading" className="mt-1 text-2xl font-semibold text-dash-navy">
+            Ringkasan organisasi
+          </h2>
         </div>
 
         <div className="space-y-4">
           {unackWarnings > 0 && (
-            <Link to="/warnings" className="block rounded-2xl border-2 border-red-400 bg-red-50 p-5 font-semibold text-red-900 shadow-sm transition-colors hover:bg-red-100">
+            <Link
+              to="/warnings"
+              className="block rounded-2xl border-2 border-red-400 bg-red-50 p-5 font-semibold text-red-900 shadow-sm transition-colors hover:bg-red-100"
+            >
               Kamu punya {unackWarnings} peringatan yang perlu dibaca. Klik untuk membukanya.
             </Link>
           )}
           {proposalsAboutMe.map((p) => (
-            <Link key={p.id} to="/warnings/proposals/$id" params={{ id: p.id }} className="block rounded-2xl border-2 border-amber-400 bg-amber-50 p-5 font-semibold text-amber-900 shadow-sm transition-colors hover:bg-amber-100">
+            <Link
+              key={p.id}
+              to="/warnings/proposals/$id"
+              params={{ id: p.id }}
+              className="block rounded-2xl border-2 border-amber-400 bg-amber-50 p-5 font-semibold text-amber-900 shadow-sm transition-colors hover:bg-amber-100"
+            >
               Ada usulan peringatan untuk kamu. Kamu berhak menyanggah.
             </Link>
           ))}
@@ -282,30 +341,95 @@ function DashboardPage() {
           <StatCard label="Divisi Saya" value={myDivision?.code ?? "-"} icon={Building2} />
           <StatCard label="Deal Aktif" value={activeDeals} icon={Handshake} />
           <StatCard label="Total Pipeline Value" value={formatRupiah(pipelineValue)} icon={Coins} />
-          <StatCard label="Saldo Organisasi" value={finance ? formatRupiah(finance.balance) : "…"} icon={Landmark} valueClassName={finance ? (finance.balance >= 0 ? "text-emerald-600" : "text-red-600") : ""} />
-          <StatCard label="Expense Bulan Ini" value={finance ? formatRupiah(finance.monthExpense) : "…"} icon={Receipt} valueClassName="text-red-600" />
+          <StatCard
+            label="Saldo Organisasi"
+            value={finance ? formatRupiah(finance.balance) : "…"}
+            icon={Landmark}
+            valueClassName={
+              finance ? (finance.balance >= 0 ? "text-emerald-600" : "text-red-600") : ""
+            }
+          />
+          <StatCard
+            label="Expense Bulan Ini"
+            value={finance ? formatRupiah(finance.monthExpense) : "…"}
+            icon={Receipt}
+            valueClassName="text-red-600"
+          />
           <StatCard label="Event Aktif" value={activeEvents.length} icon={CalendarDays} />
         </div>
 
         {canSeeWealth && (
-          <Link to="/finance-summary" className="block rounded-2xl border bg-card p-5 shadow-sm transition-colors hover:bg-accent/40">
+          <Link
+            to="/finance-summary"
+            className="block rounded-2xl border bg-card p-5 shadow-sm transition-colors hover:bg-accent/40"
+          >
             <p className="text-sm text-muted-foreground">Total Kekayaan</p>
-            <p className="mt-1 text-3xl font-bold tracking-tight break-words">{wallets ? formatRupiah(wallets.total_saldo) : "…"}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{wallets ? `Ops: ${formatRupiah(wallets.ops_saldo)} · Kas: ${formatRupiah(wallets.kas_saldo)}` : "Memuat ringkasan dompet…"}</p>
+            <p className="mt-1 text-3xl font-bold tracking-tight break-words">
+              {wallets ? formatRupiah(wallets.total_saldo) : "…"}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {wallets
+                ? `Ops: ${formatRupiah(wallets.ops_saldo)} · Kas: ${formatRupiah(wallets.kas_saldo)}`
+                : "Memuat ringkasan dompet…"}
+            </p>
           </Link>
         )}
 
         <div className="space-y-4">
-          {myPendingCancels > 0 && <Link to="/workspace" className="dashboard-info-banner">Permintaan batal task kamu ({myPendingCancels}) masih menunggu keputusan Kadiv.</Link>}
-          {myPendingHelp > 0 && <Link to="/help-requests" className="dashboard-info-banner">Request bantuan kamu ({myPendingHelp}) menunggu keputusan Kadiv divisi tujuan.</Link>}
-          {kadiv && decisionsWaiting > 0 && <Link to="/help-requests" className="dashboard-warning-banner">{decisionsWaiting} permintaan menunggu keputusanmu.</Link>}
-          {myVoteProposals.length > 0 && <Link to="/warnings/proposals" className="dashboard-info-banner">Ada <span className="font-semibold">{myVoteProposals.length}</span> usulan peringatan menunggu suara kamu.</Link>}
-          {bphOrSupervisor && activeProposals.length > 0 && <Link to="/warnings/proposals" className="dashboard-info-banner">Usulan aktif di organisasi: <span className="font-semibold">{activeProposals.length}</span></Link>}
-          {kadiv && divisionWarningCount > 0 && <Link to="/warnings" className="dashboard-info-banner">SP aktif di divisi kamu: <span className="font-semibold">{divisionWarningCount}</span></Link>}
-          {unpaidBills > 0 && <Link to="/cash" className="dashboard-warning-banner">Kamu punya {unpaidBills} tagihan kas belum dibayar. Klik untuk membayar.</Link>}
-          {cashManager && pendingClaims.length > 0 && <Link to="/cash" className="dashboard-info-banner">Klaim menunggu verifikasi: <span className="font-semibold">{pendingClaims.length}</span></Link>}
-          {unreadCoaching > 0 && <Link to="/coaching" className="dashboard-info-banner">Ada {unreadCoaching} catatan bimbingan yang belum kamu baca. Klik untuk membukanya.</Link>}
-          {weeklyContributions > 0 && <Link to="/contributions" className="dashboard-success-banner">Minggu ini kamu mendapat {weeklyContributions} apresiasi dari rekan. Terima kasih sudah hadir untuk tim.</Link>}
+          {myPendingCancels > 0 && (
+            <Link to="/workspace" className="dashboard-info-banner">
+              Permintaan batal task kamu ({myPendingCancels}) masih menunggu keputusan Kadiv.
+            </Link>
+          )}
+          {myPendingHelp > 0 && (
+            <Link to="/help-requests" className="dashboard-info-banner">
+              Request bantuan kamu ({myPendingHelp}) menunggu keputusan Kadiv divisi tujuan.
+            </Link>
+          )}
+          {kadiv && decisionsWaiting > 0 && (
+            <Link to="/help-requests" className="dashboard-warning-banner">
+              {decisionsWaiting} permintaan menunggu keputusanmu.
+            </Link>
+          )}
+          {myVoteProposals.length > 0 && (
+            <Link to="/warnings/proposals" className="dashboard-info-banner">
+              Ada <span className="font-semibold">{myVoteProposals.length}</span> usulan peringatan
+              menunggu suara kamu.
+            </Link>
+          )}
+          {bphOrSupervisor && activeProposals.length > 0 && (
+            <Link to="/warnings/proposals" className="dashboard-info-banner">
+              Usulan aktif di organisasi:{" "}
+              <span className="font-semibold">{activeProposals.length}</span>
+            </Link>
+          )}
+          {kadiv && divisionWarningCount > 0 && (
+            <Link to="/warnings" className="dashboard-info-banner">
+              SP aktif di divisi kamu: <span className="font-semibold">{divisionWarningCount}</span>
+            </Link>
+          )}
+          {unpaidBills > 0 && (
+            <Link to="/cash" className="dashboard-warning-banner">
+              Kamu punya {unpaidBills} tagihan kas belum dibayar. Klik untuk membayar.
+            </Link>
+          )}
+          {cashManager && pendingClaims.length > 0 && (
+            <Link to="/cash" className="dashboard-info-banner">
+              Klaim menunggu verifikasi:{" "}
+              <span className="font-semibold">{pendingClaims.length}</span>
+            </Link>
+          )}
+          {unreadCoaching > 0 && (
+            <Link to="/coaching" className="dashboard-info-banner">
+              Ada {unreadCoaching} catatan bimbingan yang belum kamu baca. Klik untuk membukanya.
+            </Link>
+          )}
+          {weeklyContributions > 0 && (
+            <Link to="/contributions" className="dashboard-success-banner">
+              Minggu ini kamu mendapat {weeklyContributions} apresiasi dari rekan. Terima kasih
+              sudah hadir untuk tim.
+            </Link>
+          )}
         </div>
 
         <StakeholderDashboardCards />
@@ -314,16 +438,22 @@ function DashboardPage() {
         <LetterReviewCard />
         {isSupervisor(profile?.role) && <SupervisorOverview />}
         {(isBPH(profile?.role) || (profile?.role === "Kadiv" && profile?.division === "KRD")) && (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"><ContentBalanceMiniCard /></div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <ContentBalanceMiniCard />
+          </div>
         )}
         <ActivityTimeline items={activityItems} />
         {myDivision && (
           <section className="dash-surface p-6">
             <div className="flex items-start gap-4">
-              <span className="dash-icon-bubble shrink-0"><Building2 className="size-4" /></span>
+              <span className="dash-icon-bubble shrink-0">
+                <Building2 className="size-4" />
+              </span>
               <div className="min-w-0">
                 <h2 className="text-lg font-semibold tracking-tight">Divisi {myDivision.name}</h2>
-                <p className="mt-1 text-sm text-dash-muted">{myDivision.description ?? "Belum ada deskripsi divisi."}</p>
+                <p className="mt-1 text-sm text-dash-muted">
+                  {myDivision.description ?? "Belum ada deskripsi divisi."}
+                </p>
               </div>
             </div>
           </section>

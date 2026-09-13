@@ -15,8 +15,6 @@ import {
   Users,
   Boxes,
   LogOut,
-  Menu,
-  X,
   Megaphone,
   Settings,
   BriefcaseBusiness,
@@ -48,17 +46,15 @@ import {
   Compass,
   ChartNoAxesCombined,
   ChevronDown,
-  ChevronRight,
   Network,
   ContactRound,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { supabase } from "@/lib/supabase-external";
 import { isBPH, isSupervisor, useMyProfile } from "@/hooks/useProfile";
 import { usePendingAssignmentCount } from "@/hooks/useAssignments";
 import { canApproveFunds } from "@/lib/fund-requests";
 import { canManageCategories } from "@/lib/transactions";
-import { fetchOrgSettings, resolveLogoUrl } from "@/lib/announcements";
 import {
   canManageSections,
   fetchSectionOverrides,
@@ -70,6 +66,15 @@ import { ProfileCompletionGate } from "@/components/ProfileCompletionGate";
 import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { WorkspaceNavigation } from "@/components/navigation/WorkspaceNavigation";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -80,8 +85,6 @@ export const Route = createFileRoute("/_authenticated")({
   },
   component: AppLayout,
 });
-
-const STORAGE_KEY = "sidebar-sections-state";
 
 type NavItem = {
   to: string;
@@ -115,7 +118,12 @@ const navSections: NavSection[] = [
     items: [
       { to: "/finance-summary", label: "Ringkasan Keuangan", icon: PieChart },
       { to: "/fund-requests", label: "Pengajuan Dana", icon: Wallet },
-      { to: "/fund-approvals", label: "Approval Dana", icon: ShieldCheck, requires: "fundApprover" },
+      {
+        to: "/fund-approvals",
+        label: "Approval Dana",
+        icon: ShieldCheck,
+        requires: "fundApprover",
+      },
       { to: "/budgets", label: "Anggaran", icon: PiggyBank },
       { to: "/transactions", label: "Feed Keuangan", icon: Receipt },
       { to: "/admin/categories", label: "Kelola Kategori", icon: Tags, requires: "categoryAdmin" },
@@ -220,30 +228,12 @@ const navSections: NavSection[] = [
   },
 ];
 
-function readStoredState(): Record<string, boolean> {
-  if (typeof window === "undefined") return { UTAMA: true };
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { UTAMA: true };
-    const parsed = JSON.parse(raw);
-    return typeof parsed === "object" && parsed ? parsed : { UTAMA: true };
-  } catch {
-    return { UTAMA: true };
-  }
-}
-
 function AppLayout() {
+  const { user } = Route.useRouteContext();
   const { data: profile } = useMyProfile();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { data: org } = useQuery({ queryKey: ["org-settings"], queryFn: fetchOrgSettings });
-  const { data: logoUrl } = useQuery({
-    queryKey: ["org-logo", org?.logo_url],
-    queryFn: () => resolveLogoUrl(org?.logo_url),
-    enabled: !!org?.logo_url,
-  });
   const { data: sectionSettings } = useQuery({
     queryKey: ["section-settings"],
     queryFn: fetchSectionSettings,
@@ -261,49 +251,33 @@ function AppLayout() {
   const categoryAdmin = canManageCategories(profile?.role);
   const sectionAdmin = canManageSections(profile?.role);
   const pendingAssignments = usePendingAssignmentCount();
-
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({ UTAMA: true });
-  useEffect(() => {
-    setExpanded(readStoredState());
-  }, []);
-
-  function toggleSection(key: string) {
-    setExpanded((prev) => {
-      const next = { ...prev, [key]: !prev[key] };
-      try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
-  }
-
-  function allowed(item: NavItem) {
-    if (item.requires === "categoryAdmin") return categoryAdmin;
-    if (item.requires === "orgAdmin") return canManageOrg;
-    if (item.requires === "fundApprover") return canApprove;
-    if (item.requires === "supervisor") return supervisor;
-    if (item.requires === "sectionAdmin") return sectionAdmin;
-    return true;
-  }
+  const profileDivision =
+    (profile as { division?: string | null } | null | undefined)?.division ?? null;
 
   const visibleSections = useMemo(() => {
+    function allowed(item: NavItem) {
+      if (item.requires === "categoryAdmin") return categoryAdmin;
+      if (item.requires === "orgAdmin") return canManageOrg;
+      if (item.requires === "fundApprover") return canApprove;
+      if (item.requires === "supervisor") return supervisor;
+      if (item.requires === "sectionAdmin") return sectionAdmin;
+      return true;
+    }
+
     return navSections
       .map((section) => ({ ...section, items: section.items.filter(allowed) }))
       .filter((section) => section.items.length > 0)
       .filter((section) =>
         isSectionVisible(section.key, {
           role: profile?.role,
-          division: (profile as { division?: string | null } | null | undefined)?.division ?? null,
+          division: profileDivision,
           settings: sectionSettings ?? null,
           overrides: sectionOverrides ?? null,
         }),
       );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     profile?.role,
-    (profile as { division?: string | null } | null | undefined)?.division,
+    profileDivision,
     sectionSettings,
     sectionOverrides,
     categoryAdmin,
@@ -320,123 +294,78 @@ function AppLayout() {
     navigate({ to: "/login", replace: true });
   }
 
-  function badgeFor(to: string) {
-    return to === "/mentor-tasks" ? pendingAssignments : 0;
-  }
+  const workspaceSections = useMemo(
+    () =>
+      visibleSections.map((section) => ({
+        key: section.key,
+        label: section.label,
+        items: section.items.map((item) => ({
+          ...item,
+          badge: item.to === "/mentor-tasks" ? pendingAssignments : 0,
+        })),
+      })),
+    [visibleSections, pendingAssignments],
+  );
 
   return (
-    <div className="flex min-h-screen bg-background">
-      {open && (
-        <div
-          className="fixed inset-0 z-30 bg-foreground/40 lg:hidden"
-          onClick={() => setOpen(false)}
-        />
-      )}
-
-      <aside
-        className={`dash-rail fixed inset-y-0 left-0 z-40 w-64 transform overflow-y-auto rounded-none text-sidebar-foreground transition-transform duration-200 ease-out lg:sticky lg:top-3 lg:my-3 lg:ml-3 lg:h-[calc(100vh-1.5rem)] lg:translate-x-0 lg:rounded-3xl ${
-          open ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="flex h-16 items-center justify-between border-b border-dash-line px-5">
-          {logoUrl ? (
-            <img
-              src={logoUrl}
-              alt={org?.org_name ?? "Logo organisasi"}
-              className="h-9 max-w-[160px] object-contain"
-            />
-          ) : (
-            <span className="text-lg font-bold tracking-tight">{org?.org_name ?? "OrgTool"}</span>
-          )}
-          <button className="lg:hidden" onClick={() => setOpen(false)} aria-label="Tutup menu">
-            <X className="size-5" />
-          </button>
-        </div>
-        <nav className="space-y-1 p-3">
-          {visibleSections.map((section) => {
-            const hasActive = section.items.some(
-              (item) => pathname === item.to || pathname.startsWith(item.to + "/"),
-            );
-            const isOpen = hasActive || !!expanded[section.key];
-            const sectionBadge = section.items.reduce((sum, i) => sum + badgeFor(i.to), 0);
-            return (
-              <div key={section.key}>
-                <button
-                  type="button"
-                  onClick={() => toggleSection(section.key)}
-                  aria-expanded={isOpen}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-semibold tracking-wider text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                >
-                  <span className="flex-1 text-left">{section.label}</span>
-                  {!isOpen && sectionBadge > 0 && (
-                    <span className="rounded-full bg-destructive px-2 py-0.5 text-[10px] font-semibold text-destructive-foreground">
-                      {sectionBadge}
-                    </span>
-                  )}
-                  {isOpen ? (
-                    <ChevronDown className="size-4" />
-                  ) : (
-                    <ChevronRight className="size-4" />
-                  )}
-                </button>
-                <div
-                  className="overflow-hidden transition-[max-height] duration-200 ease-in-out"
-                  style={{ maxHeight: isOpen ? `${section.items.length * 48 + 8}px` : "0px" }}
-                >
-                  <div className="space-y-1 pb-1">
-                    {section.items.map((item) => (
-                      <Link
-                        key={item.to}
-                        to={item.to}
-                        onClick={() => setOpen(false)}
-                        className="dash-nav-link flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground/80 hover:bg-dash-blue-soft/60 hover:text-dash-navy"
-                        activeProps={{
-                          className:
-                            "dash-nav-link flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold bg-dash-blue-soft/80 text-dash-navy shadow-[inset_3px_0_0_0_var(--dash-blue)]",
-                        }}
-                      >
-                        <item.icon className="size-4" />
-                        <span className="flex-1">{item.label}</span>
-                        {badgeFor(item.to) > 0 && (
-                          <span className="rounded-full bg-destructive px-2 py-0.5 text-[11px] font-semibold text-destructive-foreground">
-                            {badgeFor(item.to)}
-                          </span>
-                        )}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </nav>
-      </aside>
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-dash-line bg-background/70 px-4 backdrop-blur-xl lg:px-8">
-          <button
-            className="rounded-xl border border-dash-line p-2 transition-colors hover:bg-dash-blue-soft/60 lg:hidden"
-            onClick={() => setOpen(true)}
-            aria-label="Buka menu"
-          >
-            <Menu className="size-5" />
-          </button>
-          <div className="flex flex-1 items-center justify-end gap-3">
+    <div className="workspace-shell dash-atmosphere">
+      <WorkspaceNavigation accountId={user.id} pathname={pathname} sections={workspaceSections} />
+      <div className="workspace-content">
+        <header className="workspace-header">
+          <Link to="/dashboard" className="workspace-wordmark" aria-label="My Room — Dashboard">
+            My Room
+          </Link>
+          <div className="flex min-w-0 items-center justify-end gap-2 sm:gap-3">
             <ThemeToggle />
             <NotificationBell />
-            <div className="hidden text-right sm:block">
-              <p className="text-sm font-medium">{profile?.full_name ?? "Pengguna"}</p>
-              <p className="text-xs text-muted-foreground">{profile?.role ?? "Anggota"}</p>
-            </div>
-            <UserAvatar path={profile?.photo_url} name={profile?.full_name} className="size-9" />
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="size-4" />
-              <span className="hidden sm:inline">Keluar</span>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="h-11 min-w-0 gap-2 px-1.5 sm:px-2"
+                  aria-label="Buka menu akun"
+                >
+                  <UserAvatar
+                    path={profile?.photo_url}
+                    name={profile?.full_name}
+                    className="size-9"
+                  />
+                  <span className="hidden min-w-0 text-left md:block">
+                    <span className="block max-w-40 truncate text-sm font-semibold">
+                      {profile?.full_name ?? "Pengguna"}
+                    </span>
+                    <span className="block max-w-40 truncate text-xs text-muted-foreground">
+                      {profile?.role ?? "Anggota"}
+                    </span>
+                  </span>
+                  <ChevronDown className="hidden size-4 text-muted-foreground sm:block" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-60">
+                <DropdownMenuLabel>
+                  <span className="block truncate">{profile?.full_name ?? "Pengguna"}</span>
+                  <span className="block truncate text-xs font-normal text-muted-foreground">
+                    {profile?.role ?? "Anggota"}
+                  </span>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/profile">
+                    <User /> Profil saya
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => void handleLogout()}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <LogOut /> Keluar
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 
-        <main className="flex-1 p-4 lg:p-8">
+        <main className="workspace-main">
           <ProfileCompletionGate>
             <Outlet />
           </ProfileCompletionGate>
