@@ -254,16 +254,16 @@ function AppLayout() {
   const profileDivision =
     (profile as { division?: string | null } | null | undefined)?.division ?? null;
 
-  function allowed(item: NavItem) {
-    if (item.requires === "categoryAdmin") return categoryAdmin;
-    if (item.requires === "orgAdmin") return canManageOrg;
-    if (item.requires === "fundApprover") return canApprove;
-    if (item.requires === "supervisor") return supervisor;
-    if (item.requires === "sectionAdmin") return sectionAdmin;
-    return true;
-  }
-
   const visibleSections = useMemo(() => {
+    function allowed(item: NavItem) {
+      if (item.requires === "categoryAdmin") return categoryAdmin;
+      if (item.requires === "orgAdmin") return canManageOrg;
+      if (item.requires === "fundApprover") return canApprove;
+      if (item.requires === "supervisor") return supervisor;
+      if (item.requires === "sectionAdmin") return sectionAdmin;
+      return true;
+    }
+
     return navSections
       .map((section) => ({ ...section, items: section.items.filter(allowed) }))
       .filter((section) => section.items.length > 0)
