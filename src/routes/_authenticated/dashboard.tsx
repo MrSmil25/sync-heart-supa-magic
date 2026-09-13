@@ -29,15 +29,18 @@ import { QuickActionsGrid } from "@/components/dashboard/QuickActionsGrid";
 import { ActivityTimeline, type ActivityItem } from "@/components/dashboard/ActivityTimeline";
 import { useMyAssignments, useMySubmissions } from "@/hooks/useAssignments";
 import { fetchUnreadCount } from "@/lib/notifications";
+import { fetchOrgSettings } from "@/lib/announcements";
 import teamPhoto from "@/assets/my-room-team.jpg.asset.json";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — OrgTool" },
-      { name: "description", content: "Ringkasan anggota dan divisi organisasi kampus." },
-      { property: "og:title", content: "Dashboard — OrgTool" },
-      { property: "og:description", content: "Ringkasan anggota dan divisi organisasi kampus." },
+      { title: "Dashboard — My Room" },
+      { name: "description", content: "Panorama tim, aksi penting, dan ringkasan organisasi di My Room." },
+      { property: "og:title", content: "Dashboard — My Room" },
+      { property: "og:description", content: "Panorama tim, aksi penting, dan ringkasan organisasi di My Room." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: DashboardPage,
@@ -49,6 +52,7 @@ function DashboardPage() {
   const { data: profile } = useMyProfile();
   const { data: profiles = [], isLoading } = useProfiles();
   const { data: divisions = [] } = useDivisions();
+  const { data: org } = useQuery({ queryKey: ["org-settings"], queryFn: fetchOrgSettings });
 
   const { data: deals = [] } = useQuery({ queryKey: ["deals"], queryFn: () => fetchDeals() });
   const { data: finance } = useQuery({ queryKey: ["dashboard-finance"], queryFn: fetchDashboardFinance });
@@ -76,18 +80,18 @@ function DashboardPage() {
 
   const { data: unreadCoaching = 0 } = useQuery({
     queryKey: ["coaching-unread", profile?.id],
-    queryFn: () => countUnacknowledgedCoaching(profile!.id),
+    queryFn: () => profile?.id ? countUnacknowledgedCoaching(profile.id) : Promise.resolve(0),
     enabled: !!profile?.id,
   });
   const { data: weeklyContributions = 0 } = useQuery({
     queryKey: ["contributions-week", profile?.id],
-    queryFn: () => countContributionsThisWeek(profile!.id),
+    queryFn: () => profile?.id ? countContributionsThisWeek(profile.id) : Promise.resolve(0),
     enabled: !!profile?.id,
   });
 
   const { data: unackWarnings = 0 } = useQuery({
     queryKey: ["warnings-unack", profile?.id],
-    queryFn: () => countUnacknowledgedWarnings(profile!.id),
+    queryFn: () => profile?.id ? countUnacknowledgedWarnings(profile.id) : Promise.resolve(0),
     enabled: !!profile?.id,
   });
 
@@ -218,7 +222,7 @@ function DashboardPage() {
           <p className="dashboard-hero-date">{today}</p>
           <h1 id="dashboard-heading">{greetingName ? `Halo, ${greetingName}!` : "Halo!"}</h1>
           <p className="dashboard-hero-role">
-            {[profile?.role, "My Room"].filter(Boolean).join(" · ")}
+            {[profile?.role, org?.org_name ?? "My Room"].filter(Boolean).join(" · ")}
           </p>
           <div className="dashboard-hero-actions">
             <Link to="/workspace" className="dashboard-hero-primary">
