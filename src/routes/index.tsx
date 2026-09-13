@@ -1,6 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { MyRoomAuth } from "@/components/MyRoomAuth";
-import myRoomLogo from "@/assets/Logo_aplikasi_MR.png.asset.json";
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -19,7 +18,7 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "preload", as: "image", href: myRoomLogo.url }],
+    links: [{ rel: "preload", as: "image", href: "/assets/Logo_aplikasi_MR.png" }],
   }),
   beforeLoad: async () => {
     const { supabase } = await import("@/lib/supabase-external");
